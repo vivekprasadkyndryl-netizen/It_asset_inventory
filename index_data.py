@@ -25,7 +25,7 @@ mappings = {
             "is_internet_facing": {"type": "boolean"},
             "image_purpose": {"type": "keyword"},
             "os_system_id": {"type": "keyword"},
-            "performance_score": {"type": "float"},
+            "performance_score": {"type": "float"}
         }
     }
 }
@@ -34,22 +34,39 @@ mappings = {
 def index_csv_to_elasticsearch(csv_file):
     es = get_client()
 
-    # Create index with mappings if it doesn't exist
-    if not es.indices.exists(index=INDEX_NAME):
-        es.indices.create(index=INDEX_NAME, body=mappings)
+    # Delete index if it exists
+    if es.indices.exists(index=INDEX_NAME):
+        es.indices.delete(index=INDEX_NAME)
+        print(f"Deleted existing index '{INDEX_NAME}'.")
 
+    # Create index with mappings
+    es.indices.create(index=INDEX_NAME, body=mappings)
+    print(f"Created index '{INDEX_NAME}' with mappings.")
+
+    # Read and normalize CSV data
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
-        actions = [
-            {
+        actions = []
+
+        for row in reader:
+            # Normalize boolean fields
+            row["os_is_virtual"] = row["os_is_virtual"].strip().lower() == "true"
+            row["is_internet_facing"] = row["is_internet_facing"].strip().lower() == "true"
+
+            # Convert performance_score to float if present
+            if "performance_score" in row and row["performance_score"]:
+                try:
+                    row["performance_score"] = float(row["performance_score"])
+                except ValueError:
+                    row["performance_score"] = None
+
+            actions.append({
                 "_index": INDEX_NAME,
                 "_source": row
-            }
-            for row in reader
-        ]
+            })
 
         helpers.bulk(es, actions)
-        print(f" Indexed {len(actions)} records into '{INDEX_NAME}'.")
+        print(f"Indexed {len(actions)} records into '{INDEX_NAME}'.")
 
 if __name__ == "__main__":
-    index_csv_to_elasticsearch("it_asset_inventory_cleaned.csv")
+    index_csv_to_elasticsearch("it_asset_inventory_cleaned-2.csv")

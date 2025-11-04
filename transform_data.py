@@ -4,7 +4,7 @@ from elasticsearch import Elasticsearch
 def get_client():
     return Elasticsearch(
         "https://my-elasticsearch-project-f6972f.es.us-central1.gcp.elastic.cloud:443",
-        api_key="czg0bEtwb0JBczVkazk4SHpHa3k6anNaOS10aUhJUkttbFdxQ3JaVDBfQQ=="
+        api_key="czg0bEtwb0JBczVkazk4SHpHa3k6anNaOS10aUhJUkttbFdxQ3JaVDBfQQ=="     
     )
 
 # Index names

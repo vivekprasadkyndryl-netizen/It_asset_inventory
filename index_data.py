@@ -11,13 +11,32 @@ def get_client():
 # Index name
 INDEX_NAME = "it_asset_inventory"
 
+# Define mappings
+mappings = {
+    "mappings": {
+        "properties": {
+            "hostname": {"type": "keyword"},
+            "country": {"type": "keyword"},
+            "operating_system_name": {"type": "keyword"},
+            "operating_system_provider": {"type": "keyword"},
+            "operating_system_installation_date": {"type": "date"},
+            "operating_system_lifecycle_status": {"type": "keyword"},
+            "os_is_virtual": {"type": "boolean"},
+            "is_internet_facing": {"type": "boolean"},
+            "image_purpose": {"type": "keyword"},
+            "os_system_id": {"type": "keyword"},
+            "performance_score": {"type": "float"},
+        }
+    }
+}
+
 # Load CSV and index data
 def index_csv_to_elasticsearch(csv_file):
     es = get_client()
-    
-    # Create index if it doesn't exist
+
+    # Create index with mappings if it doesn't exist
     if not es.indices.exists(index=INDEX_NAME):
-        es.indices.create(index=INDEX_NAME)
+        es.indices.create(index=INDEX_NAME, body=mappings)
 
     with open(csv_file, newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
@@ -28,8 +47,9 @@ def index_csv_to_elasticsearch(csv_file):
             }
             for row in reader
         ]
+
         helpers.bulk(es, actions)
-        print(f"✅ Indexed {len(actions)} records into '{INDEX_NAME}'.")
+        print(f" Indexed {len(actions)} records into '{INDEX_NAME}'.")
 
 if __name__ == "__main__":
     index_csv_to_elasticsearch("it_asset_inventory_cleaned.csv")
